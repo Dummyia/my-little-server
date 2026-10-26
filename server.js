@@ -1,12 +1,21 @@
 const WebSocket = require('ws');
 const http = require('http');
 
+// HTTP istekleri için normal web sayfası yanıtı
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
   res.end('C3 Signalling Server is running!\n');
 });
 
-const wss = new WebSocket.Server({ server });
+// WebSocket sunucusunu HTTP sunucusundan bağımsız olarak "upgrade" mekanizmasıyla başlatıyoruz
+const wss = new WebSocket.Server({ noServer: true });
+
+server.on('upgrade', (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
+});
+
 const rooms = {};
 
 wss.on('connection', (ws) => {
